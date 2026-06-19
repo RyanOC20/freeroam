@@ -3,8 +3,10 @@ import type { LatLng, ParsedTrack } from "../types";
 import { parseGpx } from "./gpx";
 import { parseTcx } from "./tcx";
 import { parseFit } from "./fit";
+import { resample } from "../resample";
 
-// Strips the outer .gz layer from a filename: "foo.gpx.gz" -> "foo.gpx"
+const ACTIVITY_RE = /\.(gpx|tcx|fit)(\.gz)?$/i;
+
 function stripGz(name: string): string {
   return name.endsWith(".gz") ? name.slice(0, -3) : name;
 }
@@ -13,7 +15,6 @@ function extension(name: string): string {
   return name.split(".").pop()?.toLowerCase() ?? "";
 }
 
-// Converts fflate's callback-based API to a Promise.
 function unzipAsync(data: Uint8Array): Promise<Record<string, Uint8Array>> {
   return new Promise((resolve, reject) =>
     unzip(data, (err, files) => (err ? reject(err) : resolve(files)))
@@ -26,10 +27,7 @@ function gunzipAsync(data: Uint8Array): Promise<Uint8Array> {
   );
 }
 
-async function parseEntry(
-  name: string,
-  data: Uint8Array
-): Promise<LatLng[]> {
+async function parseEntry(name: string, data: Uint8Array): Promise<LatLng[]> {
   let bytes = data;
   let filename = name;
 
@@ -40,51 +38,48 @@ async function parseEntry(
 
   const ext = extension(filename);
 
-  if (ext === "gpx") {
-    const text = new TextDecoder().decode(bytes);
-    return parseGpx(text);
-  }
+  if (ext === "gpx") return parseGpx(new TextDecoder().decode(bytes));
+  if (ext === "tcx") return parseTcx(new TextDecoder().decode(bytes));
+  if (ext === "fit") return parseFit(bytes.buffer as ArrayBuffer);
 
-  if (ext === "tcx") {
-    const text = new TextDecoder().decode(bytes);
-    return parseTcx(text);
-  }
-
-  if (ext === "fit") {
-    return parseFit(bytes.buffer as ArrayBuffer);
-  }
-
-  // Unrecognised extension — skip silently.
   return [];
 }
 
-export async function parseArchive(file: File): Promise<ParsedTrack[]> {
-  const raw = new Uint8Array(await file.arrayBuffer());
-  const entries = await unzipAsync(raw);
+export async function parseArchive(
+  buffer: ArrayBuffer,
+  onProgress?: (done: number, total: number) => void
+): Promise<ParsedTrack[]> {
+  const entries = await unzipAsync(new Uint8Array(buffer));
 
+  const activityEntries = Object.entries(entries).filter(([path]) => {
+    const name = path.split("/").pop() ?? path;
+    return ACTIVITY_RE.test(name);
+  });
+
+  const total = activityEntries.length;
+  let done = 0;
   const tracks: ParsedTrack[] = [];
 
   await Promise.all(
-    Object.entries(entries).map(async ([path, data]) => {
+    activityEntries.map(async ([path, data]) => {
       const name = path.split("/").pop() ?? path;
 
-      // Skip non-activity entries (activities.csv, README, etc.)
-      if (
-        !name.endsWith(".gpx") &&
-        !name.endsWith(".tcx") &&
-        !name.endsWith(".fit") &&
-        !name.endsWith(".gpx.gz") &&
-        !name.endsWith(".tcx.gz") &&
-        !name.endsWith(".fit.gz")
-      ) {
+      let points: LatLng[];
+      try {
+        points = await parseEntry(name, data);
+      } catch (err) {
+        console.warn(`Skipping ${name}:`, err);
+        onProgress?.(++done, total);
         return;
       }
 
-      const points = await parseEntry(name, data);
-      if (points.length > 0) {
-        const activityId = name.replace(/\.(gpx|tcx|fit)(\.gz)?$/i, "");
-        tracks.push({ points, activityId });
+      // Indoor/manual activities have no GPS — skip them gracefully.
+      if (points.length >= 2) {
+        const activityId = name.replace(ACTIVITY_RE, "");
+        tracks.push({ points: resample(points), activityId });
       }
+
+      onProgress?.(++done, total);
     })
   );
 

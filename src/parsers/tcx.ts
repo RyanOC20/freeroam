@@ -1,9 +1,27 @@
+import { tcx } from "@tmcw/togeojson";
 import type { LatLng } from "../types";
 
-// TODO: implement using @tmcw/togeojson
-// Input: text content of a .tcx file
-// Output: array of LatLng points extracted from all <Trackpoint> elements
-export function parseTcx(_xml: string): LatLng[] {
-  console.warn("TCX parser not yet implemented");
-  return [];
+export function parseTcx(xml: string): LatLng[] {
+  const doc = new DOMParser().parseFromString(xml, "text/xml");
+  const fc = tcx(doc);
+  const points: LatLng[] = [];
+
+  for (const feature of fc.features) {
+    const { geometry } = feature;
+    if (!geometry) continue;
+
+    if (geometry.type === "LineString") {
+      for (const [lng, lat] of geometry.coordinates) {
+        points.push({ lat, lng });
+      }
+    } else if (geometry.type === "MultiLineString") {
+      for (const line of geometry.coordinates) {
+        for (const [lng, lat] of line) {
+          points.push({ lat, lng });
+        }
+      }
+    }
+  }
+
+  return points;
 }
