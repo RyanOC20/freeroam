@@ -3,7 +3,6 @@ import type { LatLng, ParsedTrack } from "../types";
 import { parseGpx } from "./gpx";
 import { parseTcx } from "./tcx";
 import { parseFit } from "./fit";
-import { resample } from "../resample";
 
 const ACTIVITY_RE = /\.(gpx|tcx|fit)(\.gz)?$/i;
 
@@ -40,7 +39,16 @@ async function parseEntry(name: string, data: Uint8Array): Promise<LatLng[]> {
 
   if (ext === "gpx") return parseGpx(new TextDecoder().decode(bytes));
   if (ext === "tcx") return parseTcx(new TextDecoder().decode(bytes));
-  if (ext === "fit") return parseFit(bytes.buffer as ArrayBuffer);
+  if (ext === "fit") {
+    // Always slice to the exact byte range of this file. If fflate hands back a
+    // Uint8Array that is a view into a larger backing buffer, passing .buffer
+    // directly would feed extra bytes to the FIT parser and risk an infinite loop.
+    const fitBuf = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength
+    ) as ArrayBuffer;
+    return parseFit(fitBuf);
+  }
 
   return [];
 }
@@ -57,31 +65,26 @@ export async function parseArchive(
   });
 
   const total = activityEntries.length;
-  let done = 0;
   const tracks: ParsedTrack[] = [];
 
-  await Promise.all(
-    activityEntries.map(async ([path, data]) => {
-      const name = path.split("/").pop() ?? path;
+  // Sequential loop rather than Promise.all: all parsers are CPU-synchronous so
+  // true parallelism is impossible, and sequential processing ensures that one
+  // bad file can't block the progress counter for every other file.
+  for (let i = 0; i < activityEntries.length; i++) {
+    const [path, data] = activityEntries[i];
+    const name = path.split("/").pop() ?? path;
 
-      let points: LatLng[];
-      try {
-        points = await parseEntry(name, data);
-      } catch (err) {
-        console.warn(`Skipping ${name}:`, err);
-        onProgress?.(++done, total);
-        return;
-      }
-
-      // Indoor/manual activities have no GPS — skip them gracefully.
+    try {
+      const points = await parseEntry(name, data);
       if (points.length >= 2) {
-        const activityId = name.replace(ACTIVITY_RE, "");
-        tracks.push({ points: resample(points), activityId });
+        tracks.push({ points, activityId: name.replace(ACTIVITY_RE, "") });
       }
+    } catch (err) {
+      console.warn(`Skipping ${name}:`, err);
+    }
 
-      onProgress?.(++done, total);
-    })
-  );
+    onProgress?.(i + 1, total);
+  }
 
   return tracks;
 }

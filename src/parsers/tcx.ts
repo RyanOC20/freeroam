@@ -1,9 +1,10 @@
 import { tcx } from "@tmcw/togeojson";
+import { DOMParser } from "@xmldom/xmldom";
 import type { LatLng } from "../types";
 
 export function parseTcx(xml: string): LatLng[] {
   const doc = new DOMParser().parseFromString(xml, "text/xml");
-  const fc = tcx(doc);
+  const fc = tcx(doc as unknown as Document);
   const points: LatLng[] = [];
 
   for (const feature of fc.features) {

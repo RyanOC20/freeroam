@@ -1,24 +1,43 @@
 import maplibregl from "maplibre-gl";
-import type { LatLng } from "./types";
+import type { ParsedTrack } from "./types";
+import { resample } from "./resample";
 
 const STYLE_URL = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`;
-const SOURCE_ID = "heatmap-source";
-const LAYER_ID = "heatmap-layer";
 
-// A few dozen points clustered around London for smoke-testing the render pipeline.
-const SAMPLE_POINTS: LatLng[] = [
-  { lat: 51.505, lng: -0.09 }, { lat: 51.506, lng: -0.088 },
-  { lat: 51.504, lng: -0.091 }, { lat: 51.507, lng: -0.087 },
-  { lat: 51.503, lng: -0.092 }, { lat: 51.508, lng: -0.086 },
-  { lat: 51.502, lng: -0.09 },  { lat: 51.509, lng: -0.085 },
-  { lat: 51.505, lng: -0.093 }, { lat: 51.506, lng: -0.084 },
-  { lat: 51.501, lng: -0.09 },  { lat: 51.51,  lng: -0.083 },
-  { lat: 51.505, lng: -0.095 }, { lat: 51.511, lng: -0.082 },
-  { lat: 51.505, lng: -0.09 },  { lat: 51.505, lng: -0.09 },
-  { lat: 51.505, lng: -0.09 },  { lat: 51.505, lng: -0.09 },
-  { lat: 51.506, lng: -0.089 }, { lat: 51.506, lng: -0.089 },
-  { lat: 51.506, lng: -0.089 }, { lat: 51.504, lng: -0.091 },
-  { lat: 51.504, lng: -0.091 }, { lat: 51.503, lng: -0.09 },
+const HEATMAP_SOURCE = "heatmap-source";
+const HEATMAP_LAYER  = "heatmap-layer";
+const TRACK_SOURCE   = "track-source";
+const TRACK_LAYER    = "track-layer";
+
+// Three sample runs in London: two share the same loop (to demo frequency stacking),
+// one goes a different way. Replaced once real data is loaded.
+const SAMPLE_TRACKS: ParsedTrack[] = [
+  {
+    activityId: "sample-1",
+    points: [
+      { lat: 51.500, lng: -0.180 }, { lat: 51.503, lng: -0.178 },
+      { lat: 51.507, lng: -0.172 }, { lat: 51.511, lng: -0.168 },
+      { lat: 51.513, lng: -0.175 }, { lat: 51.510, lng: -0.183 },
+      { lat: 51.505, lng: -0.188 }, { lat: 51.500, lng: -0.180 },
+    ],
+  },
+  {
+    activityId: "sample-2",
+    points: [
+      { lat: 51.500, lng: -0.180 }, { lat: 51.503, lng: -0.178 },
+      { lat: 51.507, lng: -0.172 }, { lat: 51.511, lng: -0.168 },
+      { lat: 51.513, lng: -0.175 }, { lat: 51.510, lng: -0.183 },
+      { lat: 51.505, lng: -0.188 }, { lat: 51.500, lng: -0.180 },
+    ],
+  },
+  {
+    activityId: "sample-3",
+    points: [
+      { lat: 51.498, lng: -0.162 }, { lat: 51.502, lng: -0.158 },
+      { lat: 51.506, lng: -0.151 }, { lat: 51.510, lng: -0.145 },
+      { lat: 51.513, lng: -0.140 },
+    ],
+  },
 ];
 
 let map: maplibregl.Map;
@@ -33,85 +52,159 @@ export function initMap(container: string): maplibregl.Map {
   });
 
   map.addControl(new maplibregl.NavigationControl(), "top-right");
-
-  map.on("load", () => {
-    addHeatmapPoints(SAMPLE_POINTS);
-  });
+  map.on("load", () => addTracks(SAMPLE_TRACKS));
 
   return map;
 }
 
-function buildGeoJson(
-  points: LatLng[]
+// ─── GeoJSON builders ────────────────────────────────────────────────────────
+
+function buildHeatmapGeoJson(
+  tracks: ParsedTrack[]
 ): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  // Resample here so frequency weighting is normalised across activities:
+  // each pass contributes exactly one point per 25 m regardless of GPS sample rate.
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+  for (const track of tracks) {
+    for (const { lat, lng } of resample(track.points, 25)) {
+      features.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: {},
+      });
+    }
+  }
+  return { type: "FeatureCollection", features };
+}
+
+function buildTrackGeoJson(
+  tracks: ParsedTrack[]
+): GeoJSON.FeatureCollection<GeoJSON.LineString> {
   return {
     type: "FeatureCollection",
-    features: points.map((p) => ({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [p.lng, p.lat] },
-      properties: {},
-    })),
+    features: tracks
+      .filter((t) => t.points.length >= 2)
+      .map((t) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "LineString" as const,
+          coordinates: t.points.map(({ lat, lng }) => [lng, lat]),
+        },
+        properties: {},
+      })),
   };
 }
 
-export function addHeatmapPoints(points: LatLng[]): void {
-  if (!map.isStyleLoaded()) {
-    map.once("load", () => addHeatmapPoints(points));
-    return;
-  }
+// ─── Layer setup ─────────────────────────────────────────────────────────────
 
-  const data = buildGeoJson(points);
-  const existing = map.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
-
-  if (existing) {
-    existing.setData(data);
-    return;
-  }
-
-  map.addSource(SOURCE_ID, { type: "geojson", data });
+function setupLayers(): void {
+  // ── Heatmap source + layer (low zoom: density overview) ──────────────────
+  map.addSource(HEATMAP_SOURCE, {
+    type: "geojson",
+    data: buildHeatmapGeoJson([]),
+  });
 
   map.addLayer({
-    id: LAYER_ID,
+    id: HEATMAP_LAYER,
     type: "heatmap",
-    source: SOURCE_ID,
+    source: HEATMAP_SOURCE,
     paint: {
-      // Each point contributes equally; density comes from overlap count.
       "heatmap-weight": 1,
 
-      // Radius in pixels — grows with zoom so the visual stays consistent.
+      // Radius: small at low zoom so routes look like thin lines, not blobs.
+      // Points are sub-pixel below zoom 13 so even 2–4 px fills the gap.
       "heatmap-radius": [
         "interpolate", ["linear"], ["zoom"],
-        5,  6,
-        10, 12,
-        14, 20,
-        18, 35,
+        1,  1,
+        8,  2,
+        11, 3,
+        13, 5,
       ],
 
-      // Intensity multiplier — boost at higher zooms so sparse areas show up.
       "heatmap-intensity": [
         "interpolate", ["linear"], ["zoom"],
-        5,  0.4,
-        14, 1.2,
+        1,  0.2,
+        13, 0.7,
       ],
 
-      // Light (low density) → orange → dark red (high density).
+      // Ramp starts at density 0.005 so rarely-traveled routes show faintly.
       "heatmap-color": [
         "interpolate", ["linear"], ["heatmap-density"],
-        0,    "rgba(0,0,0,0)",
-        0.15, "rgba(255,220,100,0.4)",
-        0.4,  "rgba(255,140,30,0.65)",
-        0.65, "rgba(220,50,10,0.85)",
-        1,    "rgba(160,10,10,1)",
+        0,      "rgba(0,0,0,0)",
+        0.005,  "rgba(255,220,100,0.18)",
+        0.03,   "rgba(255,190,55,0.45)",
+        0.12,   "rgba(255,120,15,0.68)",
+        0.35,   "rgba(220,45,5,0.84)",
+        0.7,    "rgba(160,8,0,0.94)",
+        1.0,    "rgba(100,0,0,1)",
       ],
 
-      // Fade out at very low zoom; always fully opaque once zoomed in.
+      // Fade the heatmap out as the line layer takes over.
       "heatmap-opacity": [
         "interpolate", ["linear"], ["zoom"],
-        4, 0.6,
-        8, 0.9,
+        11, 1,
+        14, 0,
       ],
     },
   });
+
+  // ── Track source + layer (high zoom: connected polylines) ─────────────────
+  map.addSource(TRACK_SOURCE, {
+    type: "geojson",
+    data: buildTrackGeoJson([]),
+  });
+
+  map.addLayer({
+    id: TRACK_LAYER,
+    type: "line",
+    source: TRACK_SOURCE,
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-color": "#ff6b2b",
+
+      // Constant-ish screen width — stays thin at every zoom level.
+      "line-width": [
+        "interpolate", ["linear"], ["zoom"],
+        11, 1,
+        16, 1.5,
+        20, 2,
+      ],
+
+      // Each activity is semi-transparent. Repeated passes on the same route
+      // stack their opacity: 1 pass ≈ 22 %, 4 passes ≈ 63 %, 10 passes ≈ 91 %.
+      // This gives a natural, free frequency signal without any aggregation step.
+      "line-opacity": [
+        "interpolate", ["linear"], ["zoom"],
+        11, 0,
+        13, 0.22,
+      ],
+    },
+  });
+}
+
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+export function addTracks(tracks: ParsedTrack[]): void {
+  if (!map.isStyleLoaded()) {
+    map.once("load", () => addTracks(tracks));
+    return;
+  }
+
+  const heatmapSource = map.getSource(HEATMAP_SOURCE) as maplibregl.GeoJSONSource | undefined;
+  const trackSource   = map.getSource(TRACK_SOURCE)   as maplibregl.GeoJSONSource | undefined;
+
+  if (heatmapSource && trackSource) {
+    heatmapSource.setData(buildHeatmapGeoJson(tracks));
+    trackSource.setData(buildTrackGeoJson(tracks));
+  } else {
+    setupLayers();
+    // Sources exist now — populate them.
+    (map.getSource(HEATMAP_SOURCE) as maplibregl.GeoJSONSource).setData(buildHeatmapGeoJson(tracks));
+    (map.getSource(TRACK_SOURCE)   as maplibregl.GeoJSONSource).setData(buildTrackGeoJson(tracks));
+  }
 }
 
 export function getMap(): maplibregl.Map {

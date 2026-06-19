@@ -1,5 +1,5 @@
 import type { LatLng, WorkerMessage } from "./types";
-import { addHeatmapPoints, getMap } from "./map";
+import { addTracks, getMap } from "./map";
 
 const dropzone = document.getElementById("dropzone") as HTMLDivElement;
 const dropTarget = document.getElementById("drop-target") as HTMLDivElement;
@@ -71,20 +71,18 @@ function handleFile(file: File): void {
 
     // msg.type === "done"
     const { tracks } = msg;
-    const allPoints = tracks.flatMap((t) => t.points);
 
-    if (allPoints.length === 0) {
+    if (tracks.length === 0) {
       showStatus("No GPS tracks found in this archive.");
       hideStatus(4000);
       return;
     }
 
-    addHeatmapPoints(allPoints);
-    flyToPoints(allPoints);
+    addTracks(tracks);
+    flyToPoints(tracks.flatMap((t) => t.points));
 
-    const n = allPoints.length.toLocaleString();
     const t = tracks.length.toLocaleString();
-    showStatus(`${n} points · ${t} track${tracks.length === 1 ? "" : "s"}`);
+    showStatus(`${t} track${tracks.length === 1 ? "" : "s"} loaded`);
     hideStatus(5000);
   };
 

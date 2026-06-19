@@ -1,9 +1,10 @@
 import { gpx } from "@tmcw/togeojson";
+import { DOMParser } from "@xmldom/xmldom";
 import type { LatLng } from "../types";
 
 export function parseGpx(xml: string): LatLng[] {
   const doc = new DOMParser().parseFromString(xml, "text/xml");
-  const fc = gpx(doc);
+  const fc = gpx(doc as unknown as Document);
   const points: LatLng[] = [];
 
   for (const feature of fc.features) {
