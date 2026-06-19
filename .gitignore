@@ -22,6 +22,16 @@ lib-cov
 coverage
 *.lcov
 
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
 # nyc test coverage
 .nyc_output
 
@@ -67,8 +77,10 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.local
 .env.*
 !.env.example
+*.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -81,6 +93,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+dist-ssr
 .output
 
 # Gatsby files
@@ -141,3 +154,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Never commit a real Strava export (personal GPS data)
+*.zip
+activities/
+export_*/
+*.gpx
+*.tcx
+*.fit
+*.fit.gz
+*.gpx.gz
+testdata/

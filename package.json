@@ -1,0 +1,22 @@
+{
+  "name": "freeroam",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your routes, all of them. A client-side GPS heatmap.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@tmcw/togeojson": "^5.8.1",
+    "fit-file-parser": "^1.9.5",
+    "fflate": "^0.8.2",
+    "maplibre-gl": "^5.5.0"
+  }
+}

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Freeroam</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css"
+    />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #0d0d0d;
+        --surface: #181818;
+        --border: #2a2a2a;
+        --text: #e8e8e8;
+        --muted: #888;
+        --accent: #ff6b2b;
+      }
+
+      html, body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        overflow: hidden;
+      }
+
+      #map {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Dropzone overlay — full-screen, shown until data is loaded */
+      #dropzone {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 13, 13, 0.93);
+        backdrop-filter: blur(4px);
+        gap: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      #dropzone.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #dropzone.drag-over .drop-target {
+        border-color: var(--accent);
+        background: rgba(255, 107, 43, 0.06);
+      }
+
+      .wordmark {
+        font-size: clamp(2.5rem, 7vw, 4.5rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--text);
+        margin-bottom: 0.25rem;
+      }
+
+      .tagline {
+        font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+        color: var(--muted);
+        letter-spacing: 0.01em;
+        margin-bottom: 2.5rem;
+      }
+
+      .drop-target {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        width: min(480px, 90vw);
+        padding: 3rem 2rem;
+        border: 2px dashed var(--border);
+        border-radius: 16px;
+        background: var(--surface);
+        transition: border-color 0.15s, background 0.15s;
+        cursor: pointer;
+      }
+
+      .drop-target:hover {
+        border-color: #444;
+      }
+
+      .drop-icon {
+        font-size: 2.5rem;
+        opacity: 0.5;
+        line-height: 1;
+      }
+
+      .drop-primary {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text);
+      }
+
+      .drop-secondary {
+        font-size: 0.82rem;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.5;
+      }
+
+      .browse-btn {
+        margin-top: 0.5rem;
+        padding: 0.55rem 1.4rem;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--text);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+      }
+
+      .browse-btn:hover {
+        border-color: #555;
+        background: rgba(255,255,255,0.04);
+      }
+
+      #file-input { display: none; }
+
+      .privacy-note {
+        margin-top: 1.75rem;
+        font-size: 0.78rem;
+        color: #555;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      /* Status bar — shown while processing, after drop */
+      #status-bar {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+
+      #status-bar.visible {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div id="dropzone">
+      <h1 class="wordmark">Freeroam</h1>
+      <p class="tagline">Your routes, all of them.</p>
+
+      <div class="drop-target" id="drop-target">
+        <div class="drop-icon">&#128205;</div>
+        <p class="drop-primary">Drop your Strava export here</p>
+        <p class="drop-secondary">
+          ZIP archive from Settings &rarr; My Account<br />
+          &rarr; Download or Delete Your Account
+        </p>
+        <button class="browse-btn" id="browse-btn">Browse file&hellip;</button>
+        <input type="file" id="file-input" accept=".zip" />
+      </div>
+
+      <p class="privacy-note">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 1a5 5 0 0 1 5 5v1h.5A1.5 1.5 0 0 1 15 8.5v6a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5v-6A1.5 1.5 0 0 1 2.5 7H3V6a5 5 0 0 1 5-5zm0 1a4 4 0 0 0-4 4v1h8V6a4 4 0 0 0-4-4zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+        </svg>
+        Your GPS data never leaves your device.
+      </p>
+    </div>
+
+    <div id="status-bar"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
