@@ -186,6 +186,63 @@
         border-radius: 1px;
         transition: width 0.12s ease;
       }
+
+      /* Sport-type filter bar — appears after data loads */
+      #filter-bar {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 1rem;
+        z-index: 10;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        max-width: calc(100vw - 2rem);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      #filter-bar.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.38rem 0.8rem;
+        font-size: 0.78rem;
+        font-weight: 500;
+        font-family: inherit;
+        color: var(--muted);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+        white-space: nowrap;
+        line-height: 1;
+      }
+
+      .filter-chip:hover {
+        border-color: #444;
+      }
+
+      .filter-chip.active {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: rgba(255, 107, 43, 0.08);
+      }
+
+      .filter-chip.active:hover {
+        background: rgba(255, 107, 43, 0.14);
+      }
+
+      .chip-count {
+        opacity: 0.55;
+        font-size: 0.72rem;
+      }
     </style>
   </head>
   <body>
@@ -213,6 +270,8 @@
         Your GPS data never leaves your device.
       </p>
     </div>
+
+    <div id="filter-bar"></div>
 
     <div id="status-bar">
       <span id="status-text"></span>

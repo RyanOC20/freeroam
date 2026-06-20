@@ -1,5 +1,6 @@
 import type { LatLng, WorkerMessage } from "./types";
 import { addTracks, getMap } from "./map";
+import { initFilterUi } from "./filter-ui";
 
 const dropzone = document.getElementById("dropzone") as HTMLDivElement;
 const dropTarget = document.getElementById("drop-target") as HTMLDivElement;
@@ -79,6 +80,7 @@ function handleFile(file: File): void {
     }
 
     addTracks(tracks);
+    initFilterUi(tracks);
     flyToPoints(tracks.flatMap((t) => t.points));
 
     const t = tracks.length.toLocaleString();

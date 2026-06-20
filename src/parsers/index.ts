@@ -6,6 +6,51 @@ import { parseFit } from "./fit";
 
 const ACTIVITY_RE = /\.(gpx|tcx|fit)(\.gz)?$/i;
 
+// ─── activities.csv parsing ───────────────────────────────────────────────────
+
+function parseCSVLine(line: string): string[] {
+  const fields: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { field += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === "," && !inQuotes) {
+      fields.push(field.trim());
+      field = "";
+    } else {
+      field += ch;
+    }
+  }
+  fields.push(field.trim());
+  return fields;
+}
+
+function buildTypeMap(csvText: string): Map<string, string> {
+  const lines = csvText.split("\n").filter((l) => l.trim());
+  if (lines.length < 2) return new Map();
+
+  const header = parseCSVLine(lines[0]).map((h) =>
+    h.replace(/"/g, "").toLowerCase().trim()
+  );
+  const idIdx   = header.findIndex((h) => h === "activity id");
+  const typeIdx = header.findIndex((h) =>
+    h === "sport type" || h === "activity type" || h === "type"
+  );
+  if (idIdx === -1 || typeIdx === -1) return new Map();
+
+  const map = new Map<string, string>();
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    const id   = cols[idIdx]?.replace(/"/g, "").trim();
+    const type = cols[typeIdx]?.replace(/"/g, "").trim();
+    if (id && type) map.set(id, type);
+  }
+  return map;
+}
+
 function stripGz(name: string): string {
   return name.endsWith(".gz") ? name.slice(0, -3) : name;
 }
@@ -59,6 +104,14 @@ export async function parseArchive(
 ): Promise<ParsedTrack[]> {
   const entries = await unzipAsync(new Uint8Array(buffer));
 
+  // Build activity-ID → sport-type map from activities.csv if present.
+  const csvEntry = Object.entries(entries).find(([path]) =>
+    path.toLowerCase().endsWith("activities.csv")
+  );
+  const typeMap = csvEntry
+    ? buildTypeMap(new TextDecoder().decode(csvEntry[1]))
+    : new Map<string, string>();
+
   const activityEntries = Object.entries(entries).filter(([path]) => {
     const name = path.split("/").pop() ?? path;
     return ACTIVITY_RE.test(name);
@@ -73,11 +126,16 @@ export async function parseArchive(
   for (let i = 0; i < activityEntries.length; i++) {
     const [path, data] = activityEntries[i];
     const name = path.split("/").pop() ?? path;
+    const activityId = name.replace(ACTIVITY_RE, "");
 
     try {
       const points = await parseEntry(name, data);
       if (points.length >= 2) {
-        tracks.push({ points, activityId: name.replace(ACTIVITY_RE, "") });
+        tracks.push({
+          points,
+          activityId,
+          activityType: typeMap.get(activityId),
+        });
       }
     } catch (err) {
       console.warn(`Skipping ${name}:`, err);

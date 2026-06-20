@@ -121,28 +121,35 @@ function setupLayers(): void {
         13, 5,
       ],
 
+      // Keep intensity low so a single long route doesn't self-accumulate into
+      // a high-density reading — the signal should come from repeated passes.
       "heatmap-intensity": [
         "interpolate", ["linear"], ["zoom"],
-        1,  0.2,
-        13, 0.7,
+        1,  0.08,
+        13, 0.32,
       ],
 
-      // Ramp starts at density 0.005 so rarely-traveled routes show faintly.
+      // Hard threshold at density ~0.07: routes at less than ~7% of the viewport
+      // maximum stay invisible. In a mixed view this hides once-traveled routes
+      // while frequently-traveled corridors still glow. In a quiet area where
+      // once-traveled routes are the viewport maximum, they'll still show — that's
+      // intentional. Alpha is capped at 0.62 so the basemap always shows through.
       "heatmap-color": [
         "interpolate", ["linear"], ["heatmap-density"],
-        0,      "rgba(0,0,0,0)",
-        0.005,  "rgba(255,220,100,0.18)",
-        0.03,   "rgba(255,190,55,0.45)",
-        0.12,   "rgba(255,120,15,0.68)",
-        0.35,   "rgba(220,45,5,0.84)",
-        0.7,    "rgba(160,8,0,0.94)",
-        1.0,    "rgba(100,0,0,1)",
+        0,     "rgba(0,0,0,0)",
+        0.07,  "rgba(0,0,0,0)",
+        0.10,  "rgba(255,160,55,0.08)",
+        0.18,  "rgba(255,135,25,0.22)",
+        0.35,  "rgba(255,100,8,0.38)",
+        0.58,  "rgba(230,55,0,0.50)",
+        0.82,  "rgba(195,22,0,0.58)",
+        1.0,   "rgba(160,8,0,0.62)",
       ],
 
       // Fade the heatmap out as the line layer takes over.
       "heatmap-opacity": [
         "interpolate", ["linear"], ["zoom"],
-        11, 1,
+        11, 0.9,
         14, 0,
       ],
     },
@@ -187,9 +194,11 @@ function setupLayers(): void {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-export function addTracks(tracks: ParsedTrack[]): void {
+let storedTracks: ParsedTrack[] = [];
+
+function applyTracks(tracks: ParsedTrack[]): void {
   if (!map.isStyleLoaded()) {
-    map.once("load", () => addTracks(tracks));
+    map.once("load", () => applyTracks(tracks));
     return;
   }
 
@@ -201,10 +210,24 @@ export function addTracks(tracks: ParsedTrack[]): void {
     trackSource.setData(buildTrackGeoJson(tracks));
   } else {
     setupLayers();
-    // Sources exist now — populate them.
     (map.getSource(HEATMAP_SOURCE) as maplibregl.GeoJSONSource).setData(buildHeatmapGeoJson(tracks));
     (map.getSource(TRACK_SOURCE)   as maplibregl.GeoJSONSource).setData(buildTrackGeoJson(tracks));
   }
+}
+
+export function addTracks(tracks: ParsedTrack[]): void {
+  storedTracks = tracks;
+  applyTracks(tracks);
+}
+
+// Pass null to show all types, or a Set of type strings to filter.
+// Tracks with no activityType are hidden whenever a filter is active.
+export function setVisibleTypes(types: Set<string> | null): void {
+  const visible =
+    types === null
+      ? storedTracks
+      : storedTracks.filter((t) => t.activityType != null && types.has(t.activityType));
+  applyTracks(visible);
 }
 
 export function getMap(): maplibregl.Map {
