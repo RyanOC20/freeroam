@@ -9,7 +9,6 @@ const navImport  = document.getElementById("navImport") as HTMLButtonElement;
 const fileInput  = document.getElementById("file") as HTMLInputElement;
 const pzFill     = document.getElementById("pzFill") as HTMLDivElement;
 const pzCount    = document.getElementById("pzCount") as HTMLSpanElement;
-const stTracks   = document.getElementById("stTracks") as HTMLDivElement;
 const statusText = document.getElementById("status-text") as HTMLSpanElement;
 const statusBar  = document.getElementById("status-bar") as HTMLDivElement;
 
@@ -95,11 +94,7 @@ function handleFile(file: File): void {
     initFilterUi(tracks);
     flyToPoints(tracks.flatMap((t) => t.points));
 
-    // Briefly show the done state with the real track count, then switch to map
-    stTracks.textContent = tracks.length.toLocaleString();
-    dropzone.classList.remove("is-parsing");
-    dropzone.classList.add("is-done");
-    setTimeout(showLanding, 1200);
+    showLanding();
 
     const t = tracks.length.toLocaleString();
     showStatus(`${t} track${tracks.length === 1 ? "" : "s"} loaded`);
