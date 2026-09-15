@@ -1,0 +1,39 @@
+/* Freeroam — candidate design tokens.
+   The tweaks panel binds live to these custom properties. */
+:root{
+  /* palette */
+  --cobalt:#000000;        /* accent */
+  --free-accent:#1c30e0;   /* "Free" tagline line (was the accent) */
+  --paper:#ffffff;
+  --ink:#0b0b10;
+  --ink-2:#3d414d;
+  --stage:#eceef2;
+
+  /* themed surface (Field = black ground; Stage = light ground) */
+  --bg:#000000;
+  --text:#ffffff;
+  --text-soft:rgba(255,255,255,.82);
+  --text-mut:rgba(255,255,255,.62);
+
+  /* form */
+  --radius:18px;
+  --bw:1px;
+  --pad:clamp(22px,4vw,56px);
+  --pad-l:clamp(14px,2vw,30px);   /* tighter left rail */
+
+  /* type */
+  --font-display:'Archivo Expanded','Archivo',sans-serif;
+  --font-sans:'Archivo',system-ui,sans-serif;
+  --h1-size:min(104px,5.8vw);     /* sized so each sentence fits one line */
+  --h1-leading:1.06;
+  --reveal-stagger:.026s;
+}
+
+/* Stage theme: cobalt goes to accent, ground goes light */
+:root[data-theme="stage"]{
+  --bg:var(--stage);
+  --text:var(--ink);
+  --text-soft:var(--ink-2);
+  --text-mut:var(--ink-2);
+  --free-accent:var(--cobalt);
+}

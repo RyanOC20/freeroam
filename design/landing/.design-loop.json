@@ -1,0 +1,51 @@
+{
+  "surface": "landing",
+  "workspace": "/Users/ryanoconnor/github/freeroam/design/landing",
+  "mode": "persuade",
+  "revamp_repo": "/Users/ryanoconnor/github/freeroam",
+  "options": [
+    { "label": "Aurora — colossal knockout, map through the letters", "refs": ["marble.png", "defined.png"] },
+    { "label": "Nocturne — cinematic full-bleed night-trails", "refs": ["son-daven.png", "frontier-ai.png"] },
+    { "label": "Grid — brutalist off-edge thermal crop", "refs": ["spade.png", "oriku.png"] },
+    { "label": "Meridian — centered portal ceremony", "refs": ["persepolis.jpg", "parisian-tours.png"] }
+  ],
+  "options_note": "Second set. First set (Atlas/Instrument/Spectral/Cobalt) rejected; user asked for bolder asset placement and stronger composition, tagline 'Everywhere you've been. Everywhere you'll go. Completely free.' present in all.",
+  "chosen_option": "cobalt",
+  "feedback": {
+    "likes": ["cobalt duotone palette (#1c30e0 + white + light stage)"],
+    "dislikes": [],
+    "directives": [
+      "keep information + general structure of current live Freeroam (nav, hero+tagline, dropzone idle/parsing/done, privacy 'your data never leaves', 3 steps)",
+      "integrate 21st.dev background-paths (FloatingPaths flowing SVG + staggered letter-reveal title), recolored cobalt; replicated in vanilla SVG/CSS for comps since repo is Vite+vanilla-TS not React/shadcn",
+      "experiment with bold composition and text placement across the four"
+    ]
+  },
+  "iterations": [
+    { "label": "Center — cobalt field, centered ceremony" },
+    { "label": "Left Stack — light stage, hard-left editorial" },
+    { "label": "Split — vertical cobalt/light division" },
+    { "label": "Anchor — tagline bottom-left overscale" }
+  ],
+  "chosen_iteration": "center-left (Center base, Anchor left-alignment)",
+  "stage": "tweaks",
+  "candidate_changes": [
+    "left-aligned tagline (from Anchor)",
+    "line spacing raised to 1.05 so lines never overlap vertically",
+    "FloatingPaths flipped horizontally (--fp-flip:-1)",
+    "headline default trimmed to min(104px,14vw) so dropzone stays above the fold"
+  ],
+  "tokens": {
+    "--cobalt": "#1c30e0", "--free-accent": "#bcd0ff",
+    "--h1-size": "min(104px,14vw)", "--h1-leading": "1.05",
+    "--radius": "18px", "--bw": "1px", "--fp-opacity": "1", "--fp-flip": "-1",
+    "--font-display": "Archivo Expanded", "theme": "field", "motion": "on"
+  },
+  "explorations": {
+    "note": "At the tweaks stage the user asked for two alternate directions to compare beside the cobalt candidate. Candidate is unchanged; chosen_option/chosen_iteration/stage untouched.",
+    "compare_shell": "prototypes/index.html (Current / Opal / Plain switcher)",
+    "prototypes": [
+      { "id": "opal", "file": "prototypes/opal.html", "ref": "opal-tadpole.jpg", "note": "Product minimalism on charcoal; generated heatmap rendered as the centered product lens with a mono white-hot ramp; muted multi-column nav; floating white import card with a single black CTA." },
+      { "id": "plain", "file": "prototypes/plain.html", "note": "Near-black background, plain white sans, hairline drop target, zero motion or decoration. Minimalist control." }
+    ]
+  }
+}

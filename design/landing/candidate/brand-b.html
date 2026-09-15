@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freeroam — brand B (footer)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Expanded:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--font-display)}
+
+  .page{height:100vh;display:flex;flex-direction:column}
+  .top{flex:1;display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(28px,4vw,58px) clamp(24px,5vw,72px) clamp(22px,3vw,40px)}
+  h1.tag{font-weight:700;letter-spacing:-.035em;line-height:1.0;font-size:clamp(46px,7vw,104px)}
+  h1.tag .ln{display:block}
+  h1.tag .free{color:var(--free-accent)}
+  .row{margin-top:clamp(22px,3vw,40px);display:flex;align-items:flex-end;justify-content:space-between;gap:40px;flex-wrap:wrap}
+  .sub{font-size:clamp(15px,1.3vw,18px);color:var(--text-soft);max-width:46ch;line-height:1.5}
+  .dz{display:inline-flex;align-items:center;gap:14px;background:var(--paper);color:var(--ink);border-radius:var(--radius);padding:12px 12px 12px 18px}
+  .dz .ic{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:calc(var(--radius) - 7px);background:rgba(28,48,224,.1);color:var(--free-accent)}
+  .dz .t1{font-weight:700;font-size:15px}
+  .dz .t2{font-size:12px;color:var(--ink-2);margin-top:2px}
+  .dz button{margin-left:8px;font-family:var(--font-sans);font-weight:700;font-size:14px;background:var(--cobalt);color:#fff;border:0;border-radius:calc(var(--radius) - 7px);padding:12px 18px;cursor:pointer}
+
+  .bottom{border-top:1px solid rgba(255,255,255,.16);padding:clamp(20px,2.6vw,34px) clamp(24px,5vw,72px);
+    display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr;gap:clamp(24px,3vw,52px);align-items:start}
+  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-.02em;margin-bottom:16px}
+  .brand .mk{width:12px;height:12px;border-radius:3px;background:var(--free-accent);transform:rotate(45deg)}
+  .bottom h2{font-weight:700;letter-spacing:-.02em;line-height:1.1;font-size:clamp(17px,1.55vw,23px);max-width:15ch}
+  .bottom .lead{margin-top:9px;font-size:12.5px;color:var(--text-mut);line-height:1.5;max-width:30ch}
+  .step .n{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--free-accent);letter-spacing:.08em}
+  .step h3{margin-top:9px;font-family:var(--font-sans);font-weight:700;font-size:15px}
+  .step p{margin-top:6px;font-size:12.5px;color:var(--text-mut);line-height:1.5}
+
+  @media(max-width:900px){html,body{overflow:auto}.page{height:auto}.bottom{grid-template-columns:1fr;gap:22px}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="top">
+      <h1 class="tag"><span class="ln">Everywhere you've been.</span><span class="ln">Everywhere you'll go.</span><span class="ln free">Completely free.</span></h1>
+      <div class="row">
+        <p class="sub">Drop your Strava archive and every GPS route you've ever recorded lights up as one heatmap, read entirely in your browser.</p>
+        <div class="dz">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg></div>
+          <div><div class="t1">Drop your Strava export .zip</div><div class="t2">GPX, TCX or FIT · read on your device</div></div>
+          <button>Browse files</button>
+        </div>
+      </div>
+    </div>
+    <div class="bottom">
+      <div><span class="brand"><span class="mk"></span>Freeroam</span><h2>Your data never leaves your machine.</h2><p class="lead">No account, no upload. There is no server to send it to.</p></div>
+      <div class="step"><div class="n">01 · EXPORT</div><h3>Export from Strava</h3><p>Request your archive in Strava settings. They email you a .zip.</p></div>
+      <div class="step"><div class="n">02 · DROP</div><h3>Drop it onto the page</h3><p>No sign-up, no connect step. Drag the .zip straight on.</p></div>
+      <div class="step"><div class="n">03 · RENDER</div><h3>Watch it light up</h3><p>Every route renders in, busiest corridors brightest.</p></div>
+    </div>
+  </div>
+</body>
+</html>

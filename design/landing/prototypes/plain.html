@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freeroam — Plain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b10; --hi:#ffffff; --mid:rgba(255,255,255,.62); --lo:rgba(255,255,255,.42);
+    --hair:rgba(255,255,255,.18);
+    --pad:clamp(22px,5vw,72px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Archivo',system-ui,sans-serif;background:var(--bg);color:var(--hi);
+    -webkit-font-smoothing:antialiased}
+
+  #hero{min-height:100vh;display:flex;flex-direction:column}
+  .nav{display:flex;justify-content:space-between;align-items:center;padding:28px var(--pad)}
+  .brand{font-weight:600;font-size:18px;letter-spacing:-.01em}
+  .links{display:flex;gap:28px;font-size:14px;color:var(--mid)}
+  .links a{color:inherit;text-decoration:none}
+  .links a:hover{color:var(--hi)}
+  @media(max-width:640px){.links{display:none}}
+
+  .core{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px var(--pad) 64px;max-width:960px}
+  h1.tagline{font-weight:600;letter-spacing:-.02em;line-height:1.1;font-size:clamp(34px,6vw,68px)}
+  h1.tagline .ln{display:block}
+  .sub{margin-top:24px;font-size:clamp(15px,1.5vw,18px);color:var(--mid);max-width:52ch;line-height:1.55}
+
+  .dz{margin-top:38px;max-width:520px;border:1px solid var(--hair);border-radius:8px;
+    padding:20px 22px;display:flex;align-items:center;gap:18px}
+  .dz .txt{flex:1}
+  .dz .t1{font-weight:600;font-size:15px}
+  .dz .t2{margin-top:3px;font-size:13px;color:var(--lo)}
+  .dz .browse{border:1px solid var(--hair);background:transparent;color:var(--hi);font:inherit;
+    font-weight:500;font-size:14px;padding:10px 18px;border-radius:6px;cursor:pointer}
+  .dz .browse:hover{background:rgba(255,255,255,.06)}
+  .lock{margin-top:16px;font-size:13px;color:var(--lo)}
+
+  .band{border-top:1px solid var(--hair);padding:clamp(56px,8vw,104px) var(--pad)}
+  .band .inner{max-width:960px}
+  .band h2{font-weight:600;letter-spacing:-.01em;line-height:1.15;font-size:clamp(24px,3.4vw,40px);max-width:20ch}
+  .band .lead{margin-top:18px;font-size:clamp(15px,1.3vw,17px);color:var(--mid);max-width:60ch;line-height:1.6}
+  .steps{margin-top:48px;border-top:1px solid var(--hair)}
+  .step{padding:24px 0;border-bottom:1px solid var(--hair);display:grid;grid-template-columns:64px 1fr;gap:24px;align-items:baseline}
+  .step .n{font-size:13px;color:var(--lo);letter-spacing:.04em}
+  .step h3{font-weight:600;font-size:16px}
+  .step p{margin-top:7px;font-size:14px;color:var(--mid);line-height:1.55}
+  .privacy{margin-top:36px;font-size:14px;color:var(--mid)}
+  @media(max-width:560px){.step{grid-template-columns:1fr;gap:6px}}
+</style>
+</head>
+<body>
+
+<section id="hero">
+  <nav class="nav">
+    <div class="brand">Freeroam</div>
+    <div class="links"><a>The map</a><a>How it works</a><a>Privacy</a></div>
+  </nav>
+  <div class="core">
+    <h1 class="tagline">
+      <span class="ln">Everywhere you've been.</span>
+      <span class="ln">Everywhere you'll go.</span>
+      <span class="ln">Completely free.</span>
+    </h1>
+    <p class="sub">Drop your Strava archive and every GPS route you've ever recorded lights up as one heatmap, read entirely in your browser.</p>
+    <div class="dz">
+      <div class="txt">
+        <div class="t1">Drop your Strava export .zip</div>
+        <div class="t2">GPX, TCX or FIT, read on your device</div>
+      </div>
+      <button class="browse">Browse files</button>
+    </div>
+    <div class="lock">No login · No upload · No server ever sees your routes</div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="inner">
+    <h2>Your data never leaves your machine.</h2>
+    <p class="lead">There's no account and no upload. When you drop your archive, Freeroam unzips and parses every GPS track right here in the browser tab. Nothing is sent to a server, because there is no server.</p>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><div><h3>Export from Strava</h3><p>Settings, My Account, Download or Delete Your Account, request your archive. Strava emails you a .zip.</p></div></div>
+      <div class="step"><div class="n">02</div><div><h3>Drop it onto the page</h3><p>No sign-up, no email, no "connect your account" step. Drag the .zip straight onto Freeroam.</p></div></div>
+      <div class="step"><div class="n">03</div><div><h3>Watch it light up</h3><p>Every route renders into the heatmap. The corridors you travel most glow brightest.</p></div></div>
+    </div>
+    <div class="privacy">No login · No upload · No server ever sees your routes</div>
+  </div>
+</section>
+
+</body>
+</html>

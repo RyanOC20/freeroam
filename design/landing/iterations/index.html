@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freeroam — cobalt iterations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Expanded:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Archivo',system-ui,sans-serif;background:#1c30e0;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  :root{--cobalt:#1c30e0;--cobalt-deep:#1526b0;--stage:#eceef2;--paper:#fff;--ink:#0b0b10;--ink-2:#3d414d}
+
+  /* switcher chrome */
+  #switch{position:fixed;z-index:9999;top:16px;left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:4px;
+    border-radius:999px;background:rgba(9,12,40,.72);backdrop-filter:blur(16px);
+    box-shadow:0 8px 30px -8px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.12);font-family:'IBM Plex Mono',monospace}
+  #switch button{border:0;background:transparent;color:rgba(255,255,255,.65);font:inherit;font-size:11px;letter-spacing:.03em;
+    padding:8px 14px;border-radius:999px;cursor:pointer;transition:.18s;white-space:nowrap}
+  #switch button:hover{color:#fff}
+  #switch button[aria-selected="true"]{background:#fff;color:var(--cobalt)}
+  .hint{position:fixed;z-index:9999;bottom:14px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase;pointer-events:none;mix-blend-mode:difference}
+  @media(max-width:660px){#switch button{padding:7px 9px;font-size:10px}}
+
+  .dir{display:none}.dir.on{display:block}
+
+  /* FloatingPaths */
+  .fp{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .fp svg{width:100%;height:100%;display:block}
+  .fp path{stroke-dasharray:.42 .58;stroke-dashoffset:1;fill:none;
+    animation:flow var(--dur,26s) linear infinite,pulse calc(var(--dur,26s)/2) ease-in-out infinite alternate}
+  @keyframes flow{to{stroke-dashoffset:0}}
+  @keyframes pulse{from{opacity:calc(var(--op)*.45)}to{opacity:var(--op)}}
+  @media(prefers-reduced-motion:reduce){.fp path{animation:none;stroke-dasharray:none;opacity:var(--op)}}
+
+  /* letter reveal */
+  .wd{display:inline-block;white-space:nowrap}
+  .ltr{display:inline-block;transform:translateY(.92em);opacity:0;will-change:transform,opacity}
+  .reveal .ltr{animation:rise .62s cubic-bezier(.2,.75,.2,1) forwards;animation-delay:calc(var(--i)*.026s)}
+  @keyframes rise{to{transform:none;opacity:1}}
+  @media(prefers-reduced-motion:reduce){.ltr{transform:none;opacity:1}.reveal .ltr{animation:none}}
+
+  /* shared button / nav bits */
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Archivo Expanded','Archivo';font-weight:800;font-size:19px;letter-spacing:-.02em}
+  .brand .mk{width:13px;height:13px;border-radius:3px;background:currentColor;transform:rotate(45deg)}
+  .navlinks{display:flex;gap:24px;font-size:13.5px;font-weight:500}
+  .import{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px;border:0;border-radius:11px;
+    padding:11px 18px;cursor:pointer}
+  .import .ar{transition:transform .25s}.import:hover .ar{transform:translateX(4px)}
+  .drop-ic{display:grid;place-items:center;flex:none}
+  h1,h2,h3{font-family:'Archivo Expanded','Archivo';}
+
+  /* ══════════ 01 CENTER ══════════ */
+  #center{background:var(--cobalt);color:#fff;min-height:100vh;position:relative;overflow:hidden}
+  #center .fp{color:#fff}
+  #center .wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+  #center .nav{display:flex;justify-content:space-between;align-items:center;padding:24px clamp(22px,4vw,56px)}
+  #center .nav .navlinks{color:rgba(255,255,255,.8)}
+  #center .import{background:#fff;color:var(--cobalt)}
+  #center .core{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px clamp(20px,4vw,48px) 40px}
+  #center h1{font-weight:900;line-height:.92;letter-spacing:-.035em;font-size:clamp(42px,8.4vw,120px);max-width:16ch}
+  #center h1 .free{display:block;color:#bcd0ff}
+  #center .sub{margin-top:26px;font-family:'Archivo';font-size:clamp(16px,1.5vw,19px);color:rgba(255,255,255,.82);max-width:52ch;line-height:1.5}
+  #center .dz{margin-top:34px;display:inline-flex;align-items:center;gap:16px;background:#fff;color:var(--ink);
+    border-radius:18px;padding:14px 14px 14px 20px;box-shadow:0 26px 50px -24px rgba(9,11,26,.7)}
+  #center .dz .ic{width:44px;height:44px;border-radius:11px;background:rgba(28,48,224,.1);color:var(--cobalt)}
+  #center .dz .t1{font-family:'Archivo';font-weight:700;font-size:15.5px;text-align:left}
+  #center .dz .t2{font-family:'Archivo';font-size:12.5px;color:var(--ink-2);margin-top:2px;text-align:left}
+  #center .dz button{font-family:'Archivo';font-weight:700;font-size:14px;background:var(--cobalt);color:#fff;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+  #center .lock{margin-top:16px;font-family:'Archivo';font-size:12.5px;letter-spacing:.02em;color:rgba(255,255,255,.62)}
+  @media(max-width:680px){#center .nav .navlinks{display:none}}
+
+  /* ══════════ 02 LEFT ══════════ */
+  #left{background:var(--stage);color:var(--ink);min-height:100vh;position:relative;overflow:hidden}
+  #left .fp{color:var(--cobalt);opacity:.9;left:34%}
+  #left .wash{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,var(--stage) 30%,rgba(236,238,242,.2) 62%,transparent)}
+  #left .wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+  #left .nav{display:flex;justify-content:space-between;align-items:center;padding:24px clamp(22px,4vw,56px)}
+  #left .nav .navlinks{color:var(--ink-2)}
+  #left .import{background:var(--cobalt);color:#fff}
+  #left .core{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px clamp(22px,5vw,72px) 56px;max-width:min(1100px,100%)}
+  #left h1{font-weight:900;line-height:.9;letter-spacing:-.04em;font-size:clamp(44px,8vw,124px);max-width:12ch}
+  #left h1 .free{color:var(--cobalt)}
+  #left .sub{margin-top:26px;font-family:'Archivo';font-size:clamp(16px,1.5vw,19px);color:var(--ink-2);max-width:46ch;line-height:1.5}
+  #left .dz{margin-top:32px;display:inline-flex;align-items:center;gap:16px;background:var(--paper);color:var(--ink);
+    border:1px solid rgba(11,11,16,.12);border-radius:16px;padding:14px 14px 14px 20px;box-shadow:0 22px 44px -26px rgba(9,11,26,.35)}
+  #left .dz .ic{width:44px;height:44px;border-radius:11px;background:var(--cobalt);color:#fff}
+  #left .dz .t1{font-family:'Archivo';font-weight:700;font-size:15.5px}
+  #left .dz .t2{font-family:'Archivo';font-size:12.5px;color:var(--ink-2);margin-top:2px}
+  #left .dz button{font-family:'Archivo';font-weight:700;font-size:14px;background:var(--cobalt);color:#fff;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+  #left .lock{margin-top:16px;font-family:'Archivo';font-size:12.5px;color:var(--ink-2)}
+  @media(max-width:680px){#left .nav .navlinks{display:none}#left .fp{left:0;opacity:.4}}
+
+  /* ══════════ 03 SPLIT ══════════ */
+  #split .row{display:grid;grid-template-columns:1.05fr .95fr;min-height:100vh}
+  #split .pane-a{position:relative;overflow:hidden;background:var(--cobalt);color:#fff;display:flex;flex-direction:column;padding:26px clamp(24px,3.4vw,52px)}
+  #split .pane-a .fp{color:#fff}
+  #split .pane-a .inner{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;justify-content:center}
+  #split .brand{margin-bottom:0}
+  #split h1{font-weight:900;line-height:.9;letter-spacing:-.04em;font-size:clamp(38px,4.8vw,80px);max-width:11ch}
+  #split h1 .free{color:#bcd0ff}
+  #split .pa-foot{position:relative;z-index:2;font-family:'Archivo';font-size:12.5px;color:rgba(255,255,255,.66)}
+  #split .pane-b{background:var(--stage);color:var(--ink);display:flex;flex-direction:column;justify-content:center;padding:clamp(30px,4vw,72px) clamp(24px,3.4vw,58px)}
+  #split .pane-b .top{display:flex;justify-content:flex-end}
+  #split .pane-b .import{background:var(--cobalt);color:#fff}
+  #split .pane-b .mid{flex:1;display:flex;flex-direction:column;justify-content:center}
+  #split .sub{font-family:'Archivo';font-size:clamp(16px,1.4vw,19px);color:var(--ink-2);max-width:40ch;line-height:1.5}
+  #split .dz{margin-top:28px;display:flex;align-items:center;gap:15px;background:var(--paper);border:1px solid rgba(11,11,16,.12);
+    border-radius:16px;padding:15px 16px;box-shadow:0 22px 44px -26px rgba(9,11,26,.35);max-width:440px}
+  #split .dz .ic{width:44px;height:44px;border-radius:11px;background:var(--cobalt);color:#fff}
+  #split .dz .t1{font-weight:700;font-size:15.5px}
+  #split .dz .t2{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+  #split .dz button{font-weight:700;font-size:14px;background:var(--cobalt);color:#fff;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;margin-left:auto}
+  #split .lock{margin-top:16px;font-size:12.5px;color:var(--ink-2)}
+  #split .steps-mini{margin-top:34px;border-top:1px solid rgba(11,11,16,.14)}
+  #split .sm{display:grid;grid-template-columns:34px 1fr;gap:16px;padding:15px 0;border-bottom:1px solid rgba(11,11,16,.14);align-items:baseline}
+  #split .sm .n{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cobalt)}
+  #split .sm h3{font-family:'Archivo';font-size:15px;font-weight:700}
+  #split .sm p{font-family:'Archivo';font-size:13px;color:var(--ink-2);margin-top:2px}
+  @media(max-width:820px){#split .row{grid-template-columns:1fr}#split .pane-a{min-height:56vh}}
+
+  /* ══════════ 04 ANCHOR ══════════ */
+  #anchor{background:var(--cobalt);color:#fff;min-height:100vh;position:relative;overflow:hidden}
+  #anchor .fp{color:#fff;bottom:auto;height:82%}
+  #anchor .fade{position:absolute;inset:0;z-index:1;background:linear-gradient(0deg,var(--cobalt) 12%,rgba(28,48,224,.15) 46%,transparent 78%)}
+  #anchor .wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+  #anchor .nav{display:flex;justify-content:space-between;align-items:center;padding:24px clamp(22px,4vw,56px)}
+  #anchor .nav .navlinks{color:rgba(255,255,255,.8)}
+  #anchor .import{background:#fff;color:var(--cobalt)}
+  #anchor .bottom{margin-top:auto;padding:0 clamp(22px,4vw,56px) clamp(34px,5vw,64px);
+    display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap}
+  #anchor h1{font-weight:900;line-height:.86;letter-spacing:-.045em;font-size:clamp(44px,8vw,116px);max-width:13ch}
+  #anchor h1 .free{color:#bcd0ff}
+  #anchor .rgt{max-width:360px}
+  #anchor .sub{font-family:'Archivo';font-size:clamp(15px,1.4vw,18px);color:rgba(255,255,255,.82);line-height:1.5}
+  #anchor .dz{margin-top:20px;display:flex;align-items:center;gap:15px;background:#fff;color:var(--ink);border-radius:16px;
+    padding:14px 14px 14px 18px;box-shadow:0 26px 50px -24px rgba(9,11,26,.7)}
+  #anchor .dz .ic{width:42px;height:42px;border-radius:10px;background:rgba(28,48,224,.1);color:var(--cobalt)}
+  #anchor .dz .t1{font-family:'Archivo';font-weight:700;font-size:15px}
+  #anchor .dz .t2{font-family:'Archivo';font-size:12px;color:var(--ink-2);margin-top:2px}
+  #anchor .dz button{font-family:'Archivo';font-weight:700;font-size:13.5px;background:var(--cobalt);color:#fff;border:0;border-radius:11px;padding:11px 16px;cursor:pointer}
+  #anchor .lock{margin-top:12px;font-family:'Archivo';font-size:12px;color:rgba(255,255,255,.62)}
+  @media(max-width:680px){#anchor .nav .navlinks{display:none}}
+
+  /* ══════════ shared steps band ══════════ */
+  .band{background:var(--cobalt);color:#fff;border-top:1px solid rgba(255,255,255,.16);padding:clamp(64px,9vw,132px) clamp(22px,4vw,56px)}
+  .band .inner{max-width:1120px;margin:0 auto}
+  .band h2{font-weight:900;letter-spacing:-.03em;line-height:1.02;font-size:clamp(30px,4.6vw,58px);max-width:16ch}
+  .band .lead{margin-top:22px;font-family:'Archivo';font-size:clamp(16px,1.4vw,18.5px);color:rgba(255,255,255,.78);max-width:60ch;line-height:1.6}
+  .steps{margin-top:56px;display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid rgba(255,255,255,.28)}
+  .step{padding:26px 26px 30px;border-right:1px solid rgba(255,255,255,.28)}
+  .step:last-child{border-right:none}
+  .step .n{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;color:#bcd0ff}
+  .step h3{margin-top:16px;font-family:'Archivo';font-weight:800;font-size:19px;letter-spacing:-.01em}
+  .step p{margin-top:8px;font-family:'Archivo';font-size:14.5px;color:rgba(255,255,255,.76);line-height:1.55}
+  .privacy{margin-top:44px;display:inline-flex;align-items:center;gap:11px;padding:13px 18px;border:1px solid rgba(255,255,255,.3);
+    border-radius:999px;font-family:'Archivo';font-size:13.5px;font-weight:500}
+  @media(max-width:820px){.steps{grid-template-columns:1fr}.step{border-right:none;border-bottom:1px solid rgba(255,255,255,.28)}.step:last-child{border-bottom:none}}
+</style>
+</head>
+<body>
+
+<nav id="switch" role="tablist" aria-label="Iterations">
+  <button role="tab" aria-selected="true" data-go="center">01 · CENTER</button>
+  <button role="tab" aria-selected="false" data-go="left">02 · LEFT</button>
+  <button role="tab" aria-selected="false" data-go="split">03 · SPLIT</button>
+  <button role="tab" aria-selected="false" data-go="anchor">04 · ANCHOR</button>
+</nav>
+<div class="hint">← → to compare · same content, four compositions</div>
+
+<div id="dropIcon" hidden>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
+</div>
+
+<!-- ══════════ 01 CENTER ══════════ -->
+<section class="dir on" id="center">
+  <div class="fp" data-fp></div>
+  <div class="wrap">
+    <nav class="nav">
+      <div class="brand"><span class="mk"></span>Freeroam</div>
+      <div class="navlinks"><a>The map</a><a>How it works</a><a>Privacy</a></div>
+      <button class="import">Import your data <span class="ar">→</span></button>
+    </nav>
+    <div class="core">
+      <h1 data-reveal>Everywhere you've been. Everywhere you'll go. <span class="free">Completely free.</span></h1>
+      <p class="sub">Drop your Strava archive and every GPS route you've ever recorded lights up as one heatmap, read entirely in your browser.</p>
+      <div class="dz">
+        <div class="ic drop-ic" data-ic></div>
+        <div><div class="t1">Drop your Strava export .zip</div><div class="t2">GPX, TCX or FIT · read on your device</div></div>
+        <button>Browse files</button>
+      </div>
+      <div class="lock">No login · No upload · No server ever sees your routes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 02 LEFT ══════════ -->
+<section class="dir" id="left">
+  <div class="fp" data-fp></div>
+  <div class="wash"></div>
+  <div class="wrap">
+    <nav class="nav">
+      <div class="brand"><span class="mk"></span>Freeroam</div>
+      <div class="navlinks"><a>The map</a><a>How it works</a><a>Privacy</a></div>
+      <button class="import">Import your data <span class="ar">→</span></button>
+    </nav>
+    <div class="core">
+      <h1 data-reveal>Everywhere you've been. Everywhere you'll go. <span class="free">Completely free.</span></h1>
+      <p class="sub">Every GPS track you've ever recorded, gathered into one heatmap and parsed right here in your browser tab.</p>
+      <div class="dz">
+        <div class="ic drop-ic" data-ic></div>
+        <div><div class="t1">Drop your Strava export .zip</div><div class="t2">GPX, TCX or FIT · read on your device</div></div>
+        <button>Browse files</button>
+      </div>
+      <div class="lock">No login · No upload · No server ever sees your routes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 03 SPLIT ══════════ -->
+<section class="dir" id="split">
+  <div class="row">
+    <div class="pane-a">
+      <div class="fp" data-fp></div>
+      <div class="brand" style="position:relative;z-index:2"><span class="mk"></span>Freeroam</div>
+      <div class="inner">
+        <h1 data-reveal>Everywhere you've been. Everywhere you'll go. <span class="free">Completely free.</span></h1>
+      </div>
+      <div class="pa-foot">No login · No upload · No server ever sees your routes</div>
+    </div>
+    <div class="pane-b">
+      <div class="top"><button class="import">Import your data <span class="ar">→</span></button></div>
+      <div class="mid">
+        <p class="sub">Drop your Strava archive. Freeroam unzips and parses every GPS track on your machine, then paints the heatmap. Nothing is uploaded.</p>
+        <div class="dz">
+          <div class="ic drop-ic" data-ic></div>
+          <div><div class="t1">Drop your Strava export .zip</div><div class="t2">GPX, TCX or FIT</div></div>
+          <button>Browse</button>
+        </div>
+        <div class="lock">Parsed on-device, always.</div>
+        <div class="steps-mini">
+          <div class="sm"><div class="n">01</div><div><h3>Export from Strava</h3><p>Request your archive under Settings → My Account.</p></div></div>
+          <div class="sm"><div class="n">02</div><div><h3>Drop it onto the page</h3><p>No sign-up, no connect step.</p></div></div>
+          <div class="sm"><div class="n">03</div><div><h3>Watch it light up</h3><p>Every route renders into the heatmap.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 04 ANCHOR ══════════ -->
+<section class="dir" id="anchor">
+  <div class="fp" data-fp></div>
+  <div class="fade"></div>
+  <div class="wrap">
+    <nav class="nav">
+      <div class="brand"><span class="mk"></span>Freeroam</div>
+      <div class="navlinks"><a>The map</a><a>How it works</a><a>Privacy</a></div>
+      <button class="import">Import your data <span class="ar">→</span></button>
+    </nav>
+    <div class="bottom">
+      <h1 data-reveal>Everywhere you've been. Everywhere you'll go. <span class="free">Completely free.</span></h1>
+      <div class="rgt">
+        <p class="sub">Drop your Strava archive and every route you've ever logged lights up as one heatmap, read entirely in your browser.</p>
+        <div class="dz">
+          <div class="ic drop-ic" data-ic></div>
+          <div><div class="t1">Drop your export .zip</div><div class="t2">GPX, TCX or FIT</div></div>
+          <button>Browse</button>
+        </div>
+        <div class="lock">No login · No upload · No server</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ shared steps band ══════════ -->
+<section class="band">
+  <div class="inner">
+    <h2>Your data never leaves your machine.</h2>
+    <p class="lead">There's no account and no upload. When you drop your archive, Freeroam unzips and parses every GPS track right here in the browser tab. Nothing is sent to a server, because there is no server.</p>
+    <div class="steps">
+      <div class="step"><div class="n">01 · EXPORT</div><h3>Export from Strava</h3><p>Settings → My Account → Download or Delete Your Account → request your archive. Strava emails you a .zip.</p></div>
+      <div class="step"><div class="n">02 · DROP</div><h3>Drop it onto the page</h3><p>No sign-up, no email, no "connect your account" step. Drag the .zip straight onto Freeroam.</p></div>
+      <div class="step"><div class="n">03 · RENDER</div><h3>Watch it light up</h3><p>Every route renders into the heatmap. The corridors you travel most glow brightest.</p></div>
+    </div>
+    <div class="privacy">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      No login · No upload · No server ever sees your routes
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── FloatingPaths (vanilla port of the 21st.dev component) ── */
+function pathSet(position){
+  let s='<title>Routes</title>';
+  for(let i=0;i<36;i++){
+    const d=`M-${380-i*5*position} -${189+i*6}C-${380-i*5*position} -${189+i*6} -${312-i*5*position} ${216-i*6} ${152-i*5*position} ${343-i*6}C${616-i*5*position} ${470-i*6} ${684-i*5*position} ${875-i*6} ${684-i*5*position} ${875-i*6}`;
+    const w=(0.5+i*0.03).toFixed(2);
+    const op=Math.min(0.85,0.10+i*0.03).toFixed(2);
+    const dur=(20+Math.random()*10).toFixed(1);
+    const delay=(-Math.random()*dur).toFixed(1);
+    s+=`<path d="${d}" stroke="currentColor" stroke-width="${w}" pathLength="1" style="--op:${op};--dur:${dur}s;animation-delay:${delay}s;opacity:${op}"/>`;
+  }
+  return s;
+}
+function buildFP(el){
+  el.innerHTML=
+    `<svg viewBox="0 0 696 316" fill="none" preserveAspectRatio="xMidYMid slice">${pathSet(1)}</svg>`+
+    `<svg viewBox="0 0 696 316" fill="none" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0">${pathSet(-1)}</svg>`;
+}
+
+/* ── staggered letter reveal (vanilla port) ── */
+function letterize(el){
+  let i=0;
+  function walk(node){
+    const frag=document.createDocumentFragment();
+    node.childNodes.forEach(ch=>{
+      if(ch.nodeType===3){
+        ch.textContent.split(/(\s+)/).forEach(tok=>{
+          if(tok==='')return;
+          if(/^\s+$/.test(tok)){frag.appendChild(document.createTextNode(' '));return;}
+          const wd=document.createElement('span');wd.className='wd';
+          for(const c of tok){const sp=document.createElement('span');sp.className='ltr';sp.style.setProperty('--i',i++);sp.textContent=c;wd.appendChild(sp);}
+          frag.appendChild(wd);
+        });
+      } else if(ch.tagName==='BR'){frag.appendChild(document.createElement('br'));}
+      else{const cl=ch.cloneNode(false);cl.appendChild(walk(ch));frag.appendChild(cl);}
+    });
+    return frag;
+  }
+  const out=walk(el);el.textContent='';el.appendChild(out);
+}
+
+document.querySelectorAll('[data-ic]').forEach(el=>el.innerHTML=document.getElementById('dropIcon').innerHTML);
+document.querySelectorAll('[data-fp]').forEach(buildFP);
+document.querySelectorAll('[data-reveal]').forEach(letterize);
+
+function fireReveal(sec){
+  sec.querySelectorAll('[data-reveal]').forEach(h=>{h.classList.remove('reveal');void h.offsetWidth;h.classList.add('reveal');});
+}
+
+const order=['center','left','split','anchor'];let cur='center';
+function show(name){
+  if(!order.includes(name))name='center';cur=name;
+  document.querySelectorAll('.dir').forEach(s=>s.classList.toggle('on',s.id===name));
+  document.querySelectorAll('#switch button').forEach(b=>b.setAttribute('aria-selected',b.dataset.go===name));
+  history.replaceState(null,'','#'+name);window.scrollTo(0,0);
+  requestAnimationFrame(()=>fireReveal(document.getElementById(name)));
+}
+document.querySelectorAll('#switch button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')show(order[(order.indexOf(cur)+1)%order.length]);
+  if(e.key==='ArrowLeft')show(order[(order.indexOf(cur)+order.length-1)%order.length]);
+});
+window.addEventListener('load',()=>show(location.hash.slice(1)||'center'));
+</script>
+</body>
+</html>
