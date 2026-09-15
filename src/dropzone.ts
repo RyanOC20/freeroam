@@ -1,11 +1,10 @@
 import type { LatLng, WorkerMessage } from "./types";
-import { addTracks, getMap } from "./map";
+import { addTracks, getMap, claimCamera } from "./map";
 import { initFilterUi } from "./filter-ui";
 
 const dropzone   = document.getElementById("dropzone") as HTMLDivElement;
-const browseBtn  = document.getElementById("browse") as HTMLButtonElement;
 const ctaBtn     = document.getElementById("cta") as HTMLButtonElement;
-const navImport  = document.getElementById("navImport") as HTMLButtonElement;
+const navImport  = document.getElementById("navImport") as HTMLButtonElement | null;
 const fileInput  = document.getElementById("file") as HTMLInputElement;
 const pzFill     = document.getElementById("pzFill") as HTMLDivElement;
 const pzCount    = document.getElementById("pzCount") as HTMLSpanElement;
@@ -47,6 +46,7 @@ function showLanding(): void {
 
 function flyToPoints(points: LatLng[]): void {
   if (points.length === 0) return;
+  claimCamera(); // imported data owns the camera now; stop the launch-framing re-assert
   let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
   for (const { lat, lng } of points) {
     if (lat < minLat) minLat = lat;
@@ -155,8 +155,7 @@ export function initDropzone(): void {
   document.addEventListener("dragleave", onDragLeave);
   document.addEventListener("drop", onDrop);
 
-  browseBtn.addEventListener("click", openPicker);
   ctaBtn.addEventListener("click", openPicker);
-  navImport.addEventListener("click", () => { window.scrollTo(0, 0); openPicker(); });
+  if (navImport) navImport.addEventListener("click", () => { window.scrollTo(0, 0); openPicker(); });
   fileInput.addEventListener("change", onFileChange);
 }

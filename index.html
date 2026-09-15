@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Freeroam</title>
   <link rel="icon" href="/favicon.svg?v=4" type="image/svg+xml">
-  <link rel="stylesheet" href="/src/landing.css">
-  <link rel="stylesheet" href="/src/map.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Expanded:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-<body data-hero="editorial">
+<body>
 
   <div id="map"></div>
   <div id="status-bar">
@@ -24,110 +25,36 @@
   </div>
 
   <div id="landing">
+    <div class="page">
+      <div class="brandbar"><span class="brand"><span class="mk"></span>Freeroam</span></div>
 
-    <nav class="nav" id="nav">
-      <div class="brand">
-        <span class="brand-mark"></span>
-        <span class="brand-name">Freeroam</span>
-      </div>
-      <div class="nav-right">
-        <button class="btn btn-accent" id="navImport">Import your data</button>
-      </div>
-    </nav>
+      <div class="top">
+        <h1 class="tag"><span class="ln">Everywhere you've been.</span><span class="ln">Everywhere you'll go.</span><span class="ln free">Completely free.</span></h1>
+        <div class="row">
+          <p class="sub">Drop your Strava archive and every GPS route you've ever recorded lights up as one heatmap, read entirely in your browser.</p>
 
-    <header class="hero">
-      <div class="hero-canvas"><canvas id="heat"></canvas></div>
-      <div class="hero-scrim"></div>
-      <div class="hero-inner">
-        <div class="hero-content">
-          <h1 class="headline" id="headline">
-            Everywhere you've been<br>
-            Everywhere you'll go<br>
-            <span class="glow">Completely free</span>
-          </h1>
-          <p class="subhead">Drop your Strava activity archive and watch every run and ride light up across the map, with the places you've traveled most glowing brightest.</p>
-
-          <div class="dropzone glass" id="dropzone">
+          <div class="dz" id="dropzone">
             <input type="file" id="file" accept=".zip,application/zip" hidden>
-
             <div class="dz-idle">
-              <div class="dz-row">
-                <div class="dz-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
-                </div>
-                <div class="dz-text">
-                  <div class="dz-title">Drop your Strava export ZIP</div>
-                  <div class="dz-sub">Drag it anywhere here, or <button class="dz-browse" id="browse" type="button">browse your files</button></div>
-                </div>
-                <button class="btn dz-cta" id="cta" type="button">Browse files</button>
-              </div>
+              <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg></div>
+              <div><div class="t1">Drop your Strava export .zip</div><div class="t2">GPX, TCX or FIT · read on your device</div></div>
+              <button class="dz-cta" id="cta" type="button">Browse files</button>
             </div>
-
             <div class="dz-parsing">
-              <div class="pz-head">
-                <span class="pz-label">Reading your activities…</span>
-                <span class="pz-count" id="pzCount">0 / 0</span>
-              </div>
+              <div class="pz-head"><span class="pz-label">Reading your activities…</span><span class="pz-count" id="pzCount">0 / 0</span></div>
               <div class="pz-bar"><div class="pz-fill" id="pzFill"></div></div>
             </div>
-
-            <div class="dz-done">
-              <div class="done-head">
-                <span class="done-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-                <span class="done-title">Your map is live.</span>
-              </div>
-              <div class="stat-grid">
-                <div class="stat"><div class="stat-v" id="stTracks">—</div><div class="stat-k">tracks</div></div>
-                <div class="stat"><div class="stat-v" id="stDist">—</div><div class="stat-k">total distance</div></div>
-                <div class="stat"><div class="stat-v">—</div><div class="stat-k">hottest place</div></div>
-              </div>
-              <button class="dz-reset" id="reset" type="button">↻ Load a different archive</button>
-            </div>
-
-            <div class="dz-lock">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <span>Parsed in your browser. Your GPS data never leaves your device.</span>
-            </div>
           </div>
         </div>
       </div>
-    </header>
 
-    <section class="band">
-      <div class="section">
-        <div class="section-head">
-          <span class="eyebrow">Privacy by architecture</span>
-          <h2 class="section-title">Your data never leaves your machine.</h2>
-          <p class="section-lead">There's no account and no upload. When you drop your archive, Freeroam unzips and parses every GPS track right here in the browser tab. Nothing is sent to a server, because there is no server.</p>
-        </div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div>
-            <h3>Export from Strava</h3>
-            <p>Settings → My Account → Download or Delete Your Account → request your archive. Strava emails you a ZIP.</p>
-            <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-          </div>
-          <div class="step">
-            <div class="step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg></div>
-            <h3>Drop it onto the page</h3>
-            <p>Drag the ZIP straight onto Freeroam. No sign-up screen, no email required, no "connect your account" step.</p>
-            <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-          </div>
-          <div class="step">
-            <div class="step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
-            <h3>Watch it light up</h3>
-            <p>Every route renders into a heatmap. The corridors you've traveled most glow hottest, from amber to deep red.</p>
-          </div>
-        </div>
-
-        <div class="privacy-note">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>No login · No upload · No server ever sees your routes</span>
-        </div>
+      <div class="bottom">
+        <div><h2>Your data never leaves your machine.</h2><p class="lead">No account, no upload. There is no server to send it to.</p></div>
+        <div class="step"><div class="n">01 · EXPORT</div><h3>Export from Strava</h3><p>Request your archive in Strava settings. They email you a .zip.</p></div>
+        <div class="step"><div class="n">02 · DROP</div><h3>Drop it onto the page</h3><p>No sign-up, no connect step. Drag the .zip straight on.</p></div>
+        <div class="step"><div class="n">03 · RENDER</div><h3>Watch it light up</h3><p>Every route renders in, busiest corridors brightest.</p></div>
       </div>
-    </section>
-
+    </div>
   </div>
 
   <script type="module" src="/src/main.ts"></script>

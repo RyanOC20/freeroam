@@ -2,7 +2,7 @@ import maplibregl from "maplibre-gl";
 import type { ParsedTrack } from "./types";
 import { resample } from "./resample";
 
-const STYLE_URL = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`;
+const STYLE_URL = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=VTmfAiUPwEEnKbFgH7wD`;
 
 const HEATMAP_SOURCE = "heatmap-source";
 const HEATMAP_LAYER  = "heatmap-layer";
@@ -42,17 +42,51 @@ const SAMPLE_TRACKS: ParsedTrack[] = [
 
 let map: maplibregl.Map;
 
+// Fixed launch camera: horizontally centered on London, vertically centered on the
+// Spain/Morocco strait (≈36°N, the Strait of Gibraltar). Hardcoded so the framing
+// is identical on every launch and screen, with no per-load computation.
+const INITIAL_CENTER: [number, number] = [-0.13, 36]; // [London lng, Gibraltar lat]
+const INITIAL_ZOOM = 2;
+
+// Set once imported data claims the camera, so the reveal re-assert below never
+// overrides where the user's tracks put the map.
+let cameraClaimed = false;
+let revealObserver: ResizeObserver | null = null;
+
+export function claimCamera(): void {
+  cameraClaimed = true;
+  revealObserver?.disconnect();
+  revealObserver = null;
+}
+
 export function initMap(container: string): maplibregl.Map {
   map = new maplibregl.Map({
     container,
     style: STYLE_URL,
-    center: [-0.09, 51.505],
-    zoom: 11,
+    center: INITIAL_CENTER,
+    zoom: INITIAL_ZOOM,
+    // renderWorldCopies defaults to true — the world repeats east–west so panning
+    // never hits a wall, matching Google Maps' endless horizontal scroll.
+    dragRotate: false, // no right-click / ctrl drag-rotate (also disables its tilt)
+    touchPitch: false, // no tilt from the two-finger touch gesture
     attributionControl: { compact: true },
   });
 
   map.addControl(new maplibregl.NavigationControl(), "top-right");
   map.on("load", () => addTracks(SAMPLE_TRACKS));
+
+  // #map starts display:none (0×0). A map built in a zero-size container can drop
+  // its configured center/zoom when first shown, so re-assert the fixed launch
+  // framing the moment the container actually has a size — unless imported data
+  // has already claimed the camera.
+  revealObserver = new ResizeObserver(() => {
+    const c = map.getContainer();
+    if (c.clientWidth === 0 || c.clientHeight === 0) return; // still hidden
+    revealObserver?.disconnect();
+    revealObserver = null;
+    if (!cameraClaimed) map.jumpTo({ center: INITIAL_CENTER, zoom: INITIAL_ZOOM });
+  });
+  revealObserver.observe(map.getContainer());
 
   return map;
 }
