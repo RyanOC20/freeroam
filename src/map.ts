@@ -168,18 +168,18 @@ function setupLayers(): void {
       // while frequently-traveled corridors still glow. In a quiet area where
       // once-traveled routes are the viewport maximum, they'll still show — that's
       // intentional. Alpha is capped at 0.62 so the basemap always shows through.
-      // Cobalt ramp matching the landing accent (#1c30e0): faint cobalt at low
-      // density brightening to a light-blue glow where corridors are busiest.
+      // White ramp: faint at low density brightening to a bright white glow
+      // where corridors are busiest. Alpha stays capped so the basemap shows through.
       "heatmap-color": [
         "interpolate", ["linear"], ["heatmap-density"],
         0,     "rgba(0,0,0,0)",
         0.07,  "rgba(0,0,0,0)",
-        0.10,  "rgba(28,48,224,0.10)",
-        0.18,  "rgba(40,70,235,0.24)",
-        0.35,  "rgba(70,110,248,0.40)",
-        0.58,  "rgba(110,150,255,0.52)",
-        0.82,  "rgba(160,195,255,0.60)",
-        1.0,   "rgba(205,225,255,0.66)",
+        0.10,  "rgba(255,255,255,0.10)",
+        0.18,  "rgba(255,255,255,0.24)",
+        0.35,  "rgba(255,255,255,0.40)",
+        0.58,  "rgba(255,255,255,0.52)",
+        0.82,  "rgba(255,255,255,0.60)",
+        1.0,   "rgba(255,255,255,0.66)",
       ],
 
       // Fade the heatmap out as the line layer takes over.
@@ -206,7 +206,7 @@ function setupLayers(): void {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "#1c30e0",
+      "line-color": "#ffffff",
 
       // Constant-ish screen width — stays thin at every zoom level.
       "line-width": [
