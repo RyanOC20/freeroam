@@ -64,6 +64,6 @@
 }
 .filter-row:hover { background: rgba(255,255,255,0.04); }
 
-.filter-check { width: 14px; height: 14px; accent-color: #ff6b2b; cursor: pointer; flex-shrink: 0; margin: 0; }
+.filter-check { width: 14px; height: 14px; accent-color: #1c30e0; cursor: pointer; flex-shrink: 0; margin: 0; }
 .filter-row-label { flex: 1; font-size: 0.82rem; color: #e8e8e8; }
 .filter-row-count { font-size: 0.75rem; color: #888; }
