@@ -168,18 +168,23 @@ function setupLayers(): void {
       // while frequently-traveled corridors still glow. In a quiet area where
       // once-traveled routes are the viewport maximum, they'll still show — that's
       // intentional. Alpha is capped at 0.62 so the basemap always shows through.
-      // White ramp: faint at low density brightening to a bright white glow
-      // where corridors are busiest. Alpha stays capped so the basemap shows through.
+      // Strava-style spectral ramp: the hue itself shifts with frequency.
+      // Rarely-traveled routes read purple; as passes stack the color climbs
+      // through magenta, red, orange, yellow to near-white at the busiest
+      // corridors. Alpha rises with density so the basemap shows through the
+      // faint end and the hottest paths read almost solid.
       "heatmap-color": [
         "interpolate", ["linear"], ["heatmap-density"],
-        0,     "rgba(0,0,0,0)",
-        0.07,  "rgba(0,0,0,0)",
-        0.10,  "rgba(255,255,255,0.10)",
-        0.18,  "rgba(255,255,255,0.24)",
-        0.35,  "rgba(255,255,255,0.40)",
-        0.58,  "rgba(255,255,255,0.52)",
-        0.82,  "rgba(255,255,255,0.60)",
-        1.0,   "rgba(255,255,255,0.66)",
+        0.00, "rgba(0,0,0,0)",
+        0.04, "rgba(68,20,130,0.20)",    // faint purple (infrequent)
+        0.15, "rgba(104,28,168,0.42)",   // purple
+        0.30, "rgba(160,32,140,0.52)",   // violet-magenta
+        0.45, "rgba(206,40,92,0.58)",    // magenta-red
+        0.58, "rgba(230,58,48,0.62)",    // red
+        0.70, "rgba(245,112,28,0.66)",   // orange
+        0.82, "rgba(252,176,44,0.70)",   // amber
+        0.92, "rgba(250,224,92,0.74)",   // yellow
+        1.00, "rgba(255,253,224,0.85)",  // near-white (most frequent)
       ],
 
       // Fade the heatmap out as the line layer takes over.
