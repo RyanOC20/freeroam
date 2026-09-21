@@ -186,9 +186,9 @@ function setupLayers(): void {
         0.45, "rgba(206,40,92,0.58)",    // magenta-red
         0.58, "rgba(230,58,48,0.62)",    // red
         0.70, "rgba(245,112,28,0.66)",   // orange
-        0.82, "rgba(252,176,44,0.70)",   // amber
-        0.92, "rgba(250,224,92,0.74)",   // yellow
-        1.00, "rgba(255,253,224,0.85)",  // near-white (most frequent)
+        0.82, "rgba(250,165,40,0.72)",   // amber
+        0.92, "rgba(253,205,64,0.80)",   // gold
+        1.00, "rgba(255,231,110,0.88)",  // warm yellow (most frequent)
       ],
 
       // Fade the heatmap out as the line layer takes over.
@@ -215,7 +215,10 @@ function setupLayers(): void {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "#ffffff",
+      // Warm orange rather than white, so zooming in past the heatmap fade
+      // keeps the paths colored. Frequency still reads here through opacity
+      // stacking below: rare passes stay faint, repeated passes brighten.
+      "line-color": "#f5701c",
 
       // Constant-ish screen width — stays thin at every zoom level.
       "line-width": [
