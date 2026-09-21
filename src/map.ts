@@ -157,10 +157,14 @@ function setupLayers(): void {
 
       // Keep intensity low so a single long route doesn't self-accumulate into
       // a high-density reading — the signal should come from repeated passes.
+      // Tuned down for dense real archives: with intensity too high, overlapping
+      // tracks saturate the ramp and the whole map reads yellow/white. Lower
+      // values keep most routes in the purple/red range so only the busiest
+      // corridors climb to yellow and near-white.
       "heatmap-intensity": [
         "interpolate", ["linear"], ["zoom"],
-        1,  0.08,
-        13, 0.32,
+        1,  0.02,
+        13, 0.09,
       ],
 
       // Hard threshold at density ~0.07: routes at less than ~7% of the viewport
