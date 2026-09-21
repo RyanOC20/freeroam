@@ -6,8 +6,6 @@ const STYLE_URL = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=VTm
 
 const HEATMAP_SOURCE = "heatmap-source";
 const HEATMAP_LAYER  = "heatmap-layer";
-const TRACK_SOURCE   = "track-source";
-const TRACK_LAYER    = "track-layer";
 
 // Three sample runs in London: two share the same loop (to demo frequency stacking),
 // one goes a different way. Replaced once real data is loaded.
@@ -111,24 +109,6 @@ function buildHeatmapGeoJson(
   return { type: "FeatureCollection", features };
 }
 
-function buildTrackGeoJson(
-  tracks: ParsedTrack[]
-): GeoJSON.FeatureCollection<GeoJSON.LineString> {
-  return {
-    type: "FeatureCollection",
-    features: tracks
-      .filter((t) => t.points.length >= 2)
-      .map((t) => ({
-        type: "Feature" as const,
-        geometry: {
-          type: "LineString" as const,
-          coordinates: t.points.map(({ lat, lng }) => [lng, lat]),
-        },
-        properties: {},
-      })),
-  };
-}
-
 // ─── Layer setup ─────────────────────────────────────────────────────────────
 
 function setupLayers(): void {
@@ -145,26 +125,32 @@ function setupLayers(): void {
     paint: {
       "heatmap-weight": 1,
 
-      // Radius: small at low zoom so routes look like thin lines, not blobs.
-      // Points are sub-pixel below zoom 13 so even 2–4 px fills the gap.
+      // Radius grows with zoom so routes stay continuous glowing paths at every
+      // zoom instead of breaking into beads. Points are resampled every ~25 m,
+      // which spreads to tens of pixels apart once you zoom in, so the kernel
+      // has to grow roughly in step (exponential) to keep the line unbroken.
       "heatmap-radius": [
-        "interpolate", ["linear"], ["zoom"],
+        "interpolate", ["exponential", 2], ["zoom"],
         1,  1,
         8,  2,
-        11, 3,
-        13, 5,
+        11, 4,
+        14, 10,
+        17, 40,
+        20, 150,
       ],
 
       // Keep intensity low so a single long route doesn't self-accumulate into
       // a high-density reading — the signal should come from repeated passes.
-      // Tuned down for dense real archives: with intensity too high, overlapping
-      // tracks saturate the ramp and the whole map reads yellow/white. Lower
-      // values keep most routes in the purple/red range so only the busiest
-      // corridors climb to yellow and near-white.
+      // It also tapers back down at high zoom: the larger radius above makes a
+      // single route's own points overlap more, so without this a lone path
+      // would self-saturate to yellow when zoomed in. Lower intensity there
+      // keeps rarely-traveled routes purple at every zoom.
       "heatmap-intensity": [
         "interpolate", ["linear"], ["zoom"],
         1,  0.02,
         13, 0.09,
+        16, 0.05,
+        20, 0.02,
       ],
 
       // Hard threshold at density ~0.07: routes at less than ~7% of the viewport
@@ -191,51 +177,9 @@ function setupLayers(): void {
         1.00, "rgba(255,231,110,0.88)",  // warm yellow (most frequent)
       ],
 
-      // Fade the heatmap out as the line layer takes over.
-      "heatmap-opacity": [
-        "interpolate", ["linear"], ["zoom"],
-        11, 0.9,
-        14, 0,
-      ],
-    },
-  });
-
-  // ── Track source + layer (high zoom: connected polylines) ─────────────────
-  map.addSource(TRACK_SOURCE, {
-    type: "geojson",
-    data: buildTrackGeoJson([]),
-  });
-
-  map.addLayer({
-    id: TRACK_LAYER,
-    type: "line",
-    source: TRACK_SOURCE,
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      // Warm orange rather than white, so zooming in past the heatmap fade
-      // keeps the paths colored. Frequency still reads here through opacity
-      // stacking below: rare passes stay faint, repeated passes brighten.
-      "line-color": "#f5701c",
-
-      // Constant-ish screen width — stays thin at every zoom level.
-      "line-width": [
-        "interpolate", ["linear"], ["zoom"],
-        11, 1,
-        16, 1.5,
-        20, 2,
-      ],
-
-      // Each activity is semi-transparent. Repeated passes on the same route
-      // stack their opacity: 1 pass ≈ 22 %, 4 passes ≈ 63 %, 10 passes ≈ 91 %.
-      // This gives a natural, free frequency signal without any aggregation step.
-      "line-opacity": [
-        "interpolate", ["linear"], ["zoom"],
-        11, 0,
-        13, 0.22,
-      ],
+      // The heatmap is now the only route layer, so keep it fully visible at
+      // every zoom instead of fading out for a vector line layer.
+      "heatmap-opacity": 0.9,
     },
   });
 }
@@ -251,15 +195,12 @@ function applyTracks(tracks: ParsedTrack[]): void {
   }
 
   const heatmapSource = map.getSource(HEATMAP_SOURCE) as maplibregl.GeoJSONSource | undefined;
-  const trackSource   = map.getSource(TRACK_SOURCE)   as maplibregl.GeoJSONSource | undefined;
 
-  if (heatmapSource && trackSource) {
+  if (heatmapSource) {
     heatmapSource.setData(buildHeatmapGeoJson(tracks));
-    trackSource.setData(buildTrackGeoJson(tracks));
   } else {
     setupLayers();
     (map.getSource(HEATMAP_SOURCE) as maplibregl.GeoJSONSource).setData(buildHeatmapGeoJson(tracks));
-    (map.getSource(TRACK_SOURCE)   as maplibregl.GeoJSONSource).setData(buildTrackGeoJson(tracks));
   }
 }
 
